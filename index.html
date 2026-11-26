@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>سبورة أوزموزيس الذكية — Osmosis Studio Pro</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <style>
+    :root {
+      --glass: rgba(255, 255, 255, 0.88);
+      --glass-strong: rgba(255, 255, 255, 0.96);
+      --border: rgba(15, 23, 42, 0.09);
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.12);
+      --cyan: #0ea5e9;
+      --danger: #ef4444;
+      --success: #10b981;
+      --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.12);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+      background: #f8fafc; color: var(--text);
+    }
+    #canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      touch-action: none; display: block; cursor: crosshair;
+    }
+
+    /* Top Floating Bar */
+    .topbar {
+      position: fixed; top: calc(env(safe-area-inset-top, 8px) + 8px);
+      left: 12px; right: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border); border-radius: 18px;
+      padding: 6px 10px; box-shadow: var(--shadow-lg); z-index: 30;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand-logo {
+      width: 34px; height: 34px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      color: #fff; display: grid; place-items: center;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .proj-title-btn {
+      font-weight: 800; font-size: 13.5px; color: var(--text);
+      background: transparent; border: none; padding: 4px 8px; border-radius: 10px;
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+    }
+    .proj-title-btn:hover { background: rgba(15, 23, 42, 0.05); }
+    .save-pill {
+      font-size: 11px; font-weight: 700; color: var(--success);
+      background: rgba(16, 185, 129, 0.12); padding: 3px 8px; border-radius: 99px;
+    }
+
+    .toolbar-row { display: flex; align-items: center; gap: 4px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 11px;
+      border: 1px solid transparent; background: transparent; color: var(--text);
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.14s ease; padding: 0;
+    }
+    .icon-btn:hover { background: rgba(15, 23, 42, 0.06); }
+    .icon-btn:active { transform: scale(0.93); }
+    .icon-btn.active {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+    }
+    .pill-btn {
+      height: 34px; padding: 0 11px; border-radius: 11px;
+      border: 1px solid var(--border); background: #fff; color: var(--text);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.14s ease;
+    }
+    .pill-btn:hover { background: #f1f5f9; }
+    .pill-btn:active { transform: scale(0.95); }
+    .pill-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #4338ca);
+      color: #fff; border: none;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    }
+    .pill-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+    .divider-v { width: 1px; height: 22px; background: var(--border); margin: 0 3px; }
+
+    /* Side / Bottom Floating Tool Dock */
+    .dock {
+      position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 8px 6px; box-shadow: var(--shadow-lg); z-index: 30;
+    }
+    .dock .icon-btn { width: 40px; height: 40px; border-radius: 13px; }
+    .divider-h { width: 24px; height: 1px; background: var(--border); margin: 3px 0; }
+    .swatches {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 2px;
+    }
+    .swatch {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.18); cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    .swatch.active { transform: scale(1.18); box-shadow: 0 0 0 2.5px var(--accent); }
+    .size-btn {
+      width: 36px; height: 28px; border-radius: 9px; border: 1px solid var(--border);
+      background: #fff; display: grid; place-items: center; cursor: pointer;
+    }
+    .size-dot { background: var(--text); border-radius: 50%; }
+
+    /* Contextual Selection Pill */
+    .context-bar {
+      position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+      display: none; align-items: center; gap: 6px;
+      background: var(--glass-strong); backdrop-filter: blur(16px);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 5px 10px; box-shadow: var(--shadow-lg); z-index: 32;
+    }
+    .context-bar.show { display: flex; }
+
+    /* Popover Panels */
+    .popover {
+      position: fixed; top: 66px; left: 16px;
+      width: 270px; background: var(--glass-strong); backdrop-filter: blur(20px);
+      border: 1px solid var(--border); border-radius: 18px;
+      padding: 14px; box-shadow: var(--shadow-lg); z-index: 40; display: none;
+    }
+    .popover.open { display: block; }
+    .pop-title { font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
+    .pattern-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+    .pattern-opt {
+      padding: 8px 4px; border-radius: 11px; border: 1px solid var(--border);
+      background: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: center;
+    }
+    .pattern-opt.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .theme-row { display: flex; gap: 8px; justify-content: space-between; }
+    .theme-chip {
+      width: 36px; height: 36px; border-radius: 11px; border: 2px solid rgba(15,23,42,0.15);
+      cursor: pointer;
+    }
+    .theme-chip.active { border-color: var(--accent); transform: scale(1.08); }
+
+    /* Bottom Osmosis Animation Timeline */
+    .timeline {
+      position: fixed; bottom: calc(env(safe-area-inset-bottom, 8px) + 8px);
+      left: 14px; right: 14px;
+      background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border); border-radius: 18px;
+      padding: 8px 14px; box-shadow: var(--shadow-lg); z-index: 30;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .scrubber-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 110px; }
+    input[type="range"] {
+      flex: 1; height: 6px; border-radius: 99px; accent-color: var(--accent); cursor: pointer;
+    }
+    .time-badge {
+      font-size: 11.5px; font-weight: 800; color: var(--muted);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    select.mini-select {
+      height: 32px; border-radius: 10px; border: 1px solid var(--border);
+      background: #fff; font-size: 12px; font-weight: 700; padding: 0 6px; color: var(--text);
+    }
+
+    /* Clean Recording Mode */
+    body.clean-mode .topbar,
+    body.clean-mode .dock,
+    body.clean-mode .timeline,
+    body.clean-mode .context-bar {
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    .exit-clean-fab {
+      position: fixed; top: 14px; left: 14px; z-index: 50; display: none;
+    }
+    body.clean-mode .exit-clean-fab { display: inline-flex; }
+
+    /* Projects Modal */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.42);
+      backdrop-filter: blur(6px); display: none; place-items: center; z-index: 60; padding: 16px;
+    }
+    .modal-mask.open { display: grid; }
+    .modal-card {
+      background: #fff; border-radius: 22px; width: min(540px, 100%);
+      max-height: 84vh; overflow: auto; padding: 20px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    }
+    .proj-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 11px 13px; border: 1px solid var(--border); border-radius: 14px; margin-top: 8px;
+    }
+
+    /* SVG icon sizing */
+    svg.ic { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    @media (max-width: 760px) {
+      .hide-mobile { display: none !important; }
+      .dock {
+        top: auto; bottom: 72px; right: 10px; left: 10px; transform: none;
+        flex-direction: row; justify-content: space-between; overflow-x: auto;
+        padding: 6px 8px; border-radius: 16px;
+      }
+      .divider-h { width: 1px; height: 22px; margin: 0 2px; }
+      .swatches { display: flex; gap: 5px; }
+      .timeline { padding: 7px 10px; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <button class="pill-btn primary exit-clean-fab" id="btnExitClean">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+    <span>إظهار الأدوات</span>
+  </button>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg class="ic" style="width:20px;height:20px;stroke:#fff;stroke-width:2.4;" viewBox="0 0 24 24">
+          <path d="M6 19h4v-2.2a7 7 0 1 1 4 0V19h4"/>
+        </svg>
+      </div>
+      <button class="proj-title-btn" id="btnProjects" title="إدارة المشاريع">
+        <span id="currentProjName">الخاصية الأسموزية</span>
+        <svg class="ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <span class="save-pill" id="saveBadge">محفوظ ✓</span>
+    </div>
+
+    <div class="toolbar-row">
+      <button class="icon-btn" id="btnUndo" title="تراجع">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button class="icon-btn" id="btnRedo" title="إعادة">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+      </button>
+      <div class="divider-v"></div>
+      <button class="icon-btn" id="btnBgPopover" title="الخلفية والألوان">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+      </button>
+      <button class="icon-btn hide-mobile" id="btnZoomOut" title="تصغير">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M8 11h6"/></svg>
+      </button>
+      <button class="pill-btn" id="btnFit" title="احتواء الكل ومستوى التكبير">
+        <span id="zoomLabel">100%</span>
+      </button>
+      <button class="icon-btn hide-mobile" id="btnZoomIn" title="تكبير">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>
+      </button>
+      <div class="divider-v"></div>
+      <button class="pill-btn" id="btnCleanMode" title="وضع التسجيل النظيف">
+        <svg class="ic" viewBox="0 0 24 24"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+        <span class="hide-mobile">تسجيل</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Context Bar when item selected -->
+  <div class="context-bar" id="contextBar">
+    <span style="font-size:11.5px;font-weight:700;color:var(--muted);">العنصر المحدد:</span>
+    <button class="pill-btn" id="btnResetMotion" style="height:28px;font-size:11px;">إلغاء الحركة</button>
+    <button class="pill-btn" id="btnRadiusCycle" style="height:28px;font-size:11px;display:none;">استدارة الحواف: 24px</button>
+    <button class="pill-btn" id="btnDeleteSelected" style="height:28px;font-size:11px;color:var(--danger);">حذف</button>
+  </div>
+
+  <!-- Background & Theme Popover -->
+  <div class="popover" id="bgPopover">
+    <div class="pop-title">نمط اللوحة اللانهائية</div>
+    <div class="pattern-grid" id="patternGrid">
+      <div class="pattern-opt active" data-pat="dots">نقاط</div>
+      <div class="pattern-opt" data-pat="grid">مربعات</div>
+      <div class="pattern-opt" data-pat="ruled">مسطرة</div>
+      <div class="pattern-opt" data-pat="isometric">هندسي</div>
+      <div class="pattern-opt" data-pat="blank">صافية</div>
+    </div>
+    <div class="pop-title">لون الخلفية</div>
+    <div class="theme-row" id="themeRow">
+      <div class="theme-chip active" data-bg="#f8fafc" style="background:#f8fafc;" title="أبيض ناعم"></div>
+      <div class="theme-chip" data-bg="#fefce8" style="background:#fefce8;" title="ورق دافئ"></div>
+      <div class="theme-chip" data-bg="#ecfdf5" style="background:#ecfdf5;" title="نعناعي"></div>
+      <div class="theme-chip" data-bg="#f0f9ff" style="background:#f0f9ff;" title="سماوي"></div>
+      <div class="theme-chip" data-bg="#fdf4ff" style="background:#fdf4ff;" title="لافندر"></div>
+      <div class="theme-chip" data-bg="#0f172a" style="background:#0f172a;" title="ليلي داكن"></div>
+    </div>
+  </div>
+
+  <!-- Modern Vector Tool Dock -->
+  <aside class="dock" id="toolDock">
+    <button class="icon-btn active" data-tool="pen" title="قلم حبر ذكي">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="highlighter" title="قلم تظليل">
+      <svg class="ic" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="eraser" title="ممحاة">
+      <svg class="ic" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="select" title="تحديد وتحريك (يسجل الحركة)">
+      <svg class="ic" viewBox="0 0 24 24"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="pan" title="تحريك اللوحة">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="laser" title="مؤشر الليزر للشرح">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+    </button>
+    <div class="divider-h"></div>
+    <button class="icon-btn" data-tool="arrow" title="سهم">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="rect" title="مستطيل">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="circle" title="دائرة">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+    </button>
+    <button class="icon-btn" data-tool="text" title="إضافة نص">
+      <svg class="ic" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </button>
+    <button class="icon-btn" id="btnInsertImg" title="إدراج صورة بزوايا دائرية">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </button>
+    <input type="file" id="imgInput" accept="image/*" hidden />
+    <div class="divider-h"></div>
+    <div class="swatches">
+      <span class="swatch active" data-color="#1e293b" style="background:#1e293b"></span>
+      <span class="swatch" data-color="#4f46e5" style="background:#4f46e5"></span>
+      <span class="swatch" data-color="#0284c7" style="background:#0284c7"></span>
+      <span class="swatch" data-color="#059669" style="background:#059669"></span>
+      <span class="swatch" data-color="#dc2626" style="background:#dc2626"></span>
+      <span class="swatch" data-color="#f59e0b" style="background:#f59e0b"></span>
+    </div>
+    <button class="size-btn" id="btnSizeCycle" title="تغيير سمك القلم">
+      <span class="size-dot" id="sizePreview" style="width:7px;height:7px;"></span>
+    </button>
+  </aside>
+
+  <!-- Bottom Animation Timeline -->
+  <footer class="timeline">
+    <button class="pill-btn primary" id="btnPlay">
+      <svg class="ic" id="playIcon" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>
+      <span id="playText">تشغيل</span>
+    </button>
+    <button class="icon-btn" id="btnRestart" title="إعادة من البداية">
+      <svg class="ic" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+    </button>
+    <button class="icon-btn" id="btnStep" title="تشغيل الخطوة التالية">
+      <svg class="ic" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+    </button>
+    <button class="pill-btn active" id="btnEditMode">
+      <span>تحرير</span>
+    </button>
+    <div class="scrubber-wrap">
+      <input type="range" id="scrubber" min="0" max="1000" value="1000" />
+      <span class="time-badge" id="timeLabel">0.0 / 0.0s</span>
+    </div>
+    <select class="mini-select" id="speedSelect" title="سرعة العرض">
+      <option value="0.5">0.5x</option>
+      <option value="1" selected>1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+    <button class="icon-btn active hide-mobile" id="btnCamFollow" title="تتبع الكاميرا التلقائي">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+    </button>
+  </footer>
+
+  <!-- Projects & Save Modal -->
+  <div class="modal-mask" id="projectsModal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:17px;">المشاريع والحفظ التلقائي</h3>
+        <button class="icon-btn" id="btnCloseProjects">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;">
+        <input id="renameInput" type="text" placeholder="اسم المشروع..." style="flex:1;height:36px;border-radius:11px;border:1px solid var(--border);padding:0 12px;font-family:inherit;font-weight:700;" />
+        <button class="pill-btn" id="btnSaveRename">حفظ الاسم</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button class="pill-btn primary" id="btnNewBlank">+ سبورة جديدة فارغة</button>
+        <button class="pill-btn" id="btnNewDemo">+ درس الأسموزية</button>
+        <button class="pill-btn" id="btnExportJson">تصدير JSON</button>
+        <button class="pill-btn" id="btnImportJson">استيراد JSON</button>
+        <input type="file" id="jsonInput" accept=".json" hidden />
+      </div>
+      <div id="projectsList" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+    }
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const STORAGE_KEY = "osmosis_pro_v2_projects";
+    const ACTIVE_KEY = "osmosis_pro_v2_active";
+
+    let projects = {};
+    let currentProjectId = null;
+    const sizeSteps = [2.5, 4.5, 8, 14];
+    let sizeIndex = 1;
+
+    const state = {
+      items: [],
+      undoStack: [],
+      redoStack: [],
+      tool: "pen",
+      color: "#1e293b",
+      size: 4.5,
+      bgPattern: "dots",
+      bgTheme: "#f8fafc",
+      cam: { x: 0, y: 0, zoom: 1 },
+      camFollow: true,
+      selectedId: null,
+      laserTrail: [],
+      playback: {
+        mode: false,
+        playing: false,
+        time: 0,
+        totalDuration: 0,
+        speed: 1,
+        stepTargetEnd: null,
+        lastTs: 0
+      }
+    };
+
+    const imageCache = new Map();
+    let renderQueued = false;
+    function scheduleRender() {
+      if (renderQueued) return;
+      renderQueued = true;
+      requestAnimationFrame(() => {
+        renderQueued = false;
+        render();
+      });
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      scheduleRender();
+    }
+    window.addEventListener("resize", resize);
+
+    function screenToWorld(sx, sy) {
+      return {
+        x: (sx - window.innerWidth / 2) / state.cam.zoom + state.cam.x,
+        y: (sy - window.innerHeight / 2) / state.cam.zoom + state.cam.y
+      };
+    }
+
+    // Catmull-Rom / quadratic midpoint smooth path rendering for silky handwriting
+    function traceSmoothPoints(pts, count) {
+      if (count <= 0) return;
+      if (count === 1) {
+        ctx.arc(pts[0].x, pts[0].y, 0.5, 0, Math.PI * 2);
+        return;
+      }
+      ctx.moveTo(pts[0].x, pts[0].y);
+      if (count === 2) {
+        ctx.lineTo(pts[1].x, pts[1].y);
+        return;
+      }
+      for (let i = 1; i < count - 1; i++) {
+        const xc = (pts[i].x + pts[i + 1].x) * 0.5;
+        const yc = (pts[i].y + pts[i + 1].y) * 0.5;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, xc, yc);
+      }
+      ctx.lineTo(pts[count - 1].x, pts[count - 1].y);
+    }
+
+    function rebuildTimeline() {
+      let t = 0;
+      for (const item of state.items) {
+        item.startTime = t;
+        let dur = 0.65;
+        if (item.type === "stroke" || item.type === "highlighter") {
+          const pts = item.points ? item.points.length : 1;
+          dur = Math.max(0.32, Math.min(2.4, pts * 0.015));
+        } else if (item.type === "text") {
+          dur = Math.max(0.45, Math.min(1.8, (item.text || "").length * 0.038));
+        } else if (item.type === "image") {
+          dur = 0.7;
+        }
+        item.duration = dur;
+        item.endTime = t + dur;
+        t = item.endTime + 0.1;
+
+        if (item.motions && item.motions.length) {
+          for (const m of item.motions) {
+            m.startTime = t;
+            m.duration = 0.85;
+            m.endTime = t + m.duration;
+            t = m.endTime + 0.08;
+          }
+        }
+      }
+      state.playback.totalDuration = Math.max(0, t);
+      if (!state.playback.mode) state.playback.time = state.playback.totalDuration;
+      syncTimelineUI();
+    }
+
+    function syncTimelineUI() {
+      const total = state.playback.totalDuration;
+      const cur = Math.min(state.playback.time, total);
+      document.getElementById("timeLabel").textContent = `${cur.toFixed(1)} / ${total.toFixed(1)}s`;
+      document.getElementById("scrubber").value = total > 0 ? Math.round((cur / total) * 1000) : 1000;
+      document.getElementById("playText").textContent = state.playback.playing ? "إيقاف" : "تشغيل";
+      document.getElementById("playIcon").innerHTML = state.playback.playing
+        ? '<rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none"/>'
+        : '<polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/>';
+      document.getElementById("btnEditMode").classList.toggle("active", !state.playback.mode);
+      updateContextBar();
+    }
+
+    function updateContextBar() {
+      const bar = document.getElementById("contextBar");
+      const it = !state.playback.mode && state.selectedId ? state.items.find(x => x.id === state.selectedId) : null;
+      bar.classList.toggle("show", !!it);
+      if (it) {
+        const radBtn = document.getElementById("btnRadiusCycle");
+        if (it.type === "image") {
+          radBtn.style.display = "inline-flex";
+          radBtn.textContent = `استدارة الحواف: ${it.borderRadius ?? 24}px`;
+        } else {
+          radBtn.style.display = "none";
+        }
+      }
+    }
+
+    let saveTimer = null;
+    function queueSave() {
+      document.getElementById("saveBadge").textContent = "يحفظ...";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          if (!currentProjectId) currentProjectId = "proj_" + Date.now();
+          const title = projects[currentProjectId]?.title || document.getElementById("currentProjName").textContent || "درس تعليمي";
+          projects[currentProjectId] = {
+            id: currentProjectId,
+            title,
+            updatedAt: Date.now(),
+            bgPattern: state.bgPattern,
+            bgTheme: state.bgTheme,
+            cam: state.cam,
+            items: state.items
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+          localStorage.setItem(ACTIVE_KEY, currentProjectId);
+          document.getElementById("saveBadge").textContent = "محفوظ ✓";
+        } catch (e) {
+          document.getElementById("saveBadge").textContent = "ذاكرة ممتلئة";
+        }
+      }, 380);
+    }
+
+    function pushUndo() {
+      state.undoStack.push(JSON.stringify(state.items));
+      if (state.undoStack.length > 45) state.undoStack.shift();
+      state.redoStack = [];
+    }
+
+    function getItemBounds(item) {
+      if (item.points && item.points.length) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const p of item.points) {
+          if (p.x < minX) minX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y > maxY) maxY = p.y;
+        }
+        return { x: minX - 10, y: minY - 10, w: Math.max(24, maxX - minX + 20), h: Math.max(24, maxY - minY + 20) };
+      }
+      if (item.type === "text") {
+        const w = Math.max(60, (item.text || "").length * (item.size || 24) * 0.56);
+        const h = (item.size || 24) * 1.4;
+        return { x: item.x - w, y: item.y - h * 0.8, w, h };
+      }
+      const x = Math.min(item.x, item.x + (item.w || 0));
+      const y = Math.min(item.y, item.y + (item.h || 0));
+      return { x, y, w: Math.abs(item.w || 40), h: Math.abs(item.h || 40) };
+    }
+
+    function getAnimatedOffset(item, t) {
+      let dx = 0, dy = 0;
+      if (!item.motions) return { dx, dy };
+      for (const m of item.motions) {
+        if (t >= m.endTime) {
+          dx += m.dx; dy += m.dy;
+        } else if (t > m.startTime) {
+          const raw = (t - m.startTime) / Math.max(0.001, m.duration);
+          const ease = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+          dx += m.dx * ease;
+          dy += m.dy * ease;
+        }
+      }
+      return { dx, dy };
+    }
+
+    function drawBackground() {
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.fillStyle = state.bgTheme;
+      ctx.fillRect(0, 0, w, h);
+      if (state.bgPattern === "blank") return;
+
+      const isDark = state.bgTheme === "#0f172a";
+      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)";
+      ctx.fillStyle = isDark ? "rgba(255,255,255,0.18)" : "rgba(15,23,42,0.18)";
+
+      let step = 32 * state.cam.zoom;
+      while (step < 14) step *= 2;
+      const ox = (w / 2 - state.cam.x * state.cam.zoom) % step;
+      const oy = (h / 2 - state.cam.y * state.cam.zoom) % step;
+
+      if (state.bgPattern === "dots") {
+        for (let x = ox; x < w; x += step) {
+          for (let y = oy; y < h; y += step) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1.35, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else if (state.bgPattern === "grid") {
+        ctx.beginPath();
+        for (let x = ox; x < w; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+        for (let y = oy; y < h; y += step) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        ctx.stroke();
+      } else if (state.bgPattern === "ruled") {
+        ctx.beginPath();
+        for (let y = oy; y < h; y += step) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        ctx.stroke();
+      } else if (state.bgPattern === "isometric") {
+        ctx.beginPath();
+        for (let x = ox - h; x < w + h; x += step) {
+          ctx.moveTo(x, 0); ctx.lineTo(x + h * 0.58, h);
+          ctx.moveTo(x, 0); ctx.lineTo(x - h * 0.58, h);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawRoundedImage(img, x, y, w, h, r) {
+      const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, radius);
+      ctx.clip();
+      ctx.drawImage(img, x, y, w, h);
+      ctx.restore();
+      ctx.strokeStyle = "rgba(79,70,229,0.22)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, radius);
+      ctx.stroke();
+    }
+
+    function drawItem(item, t, activeFocus) {
+      if (state.playback.mode && t < item.startTime) return;
+      const progress = state.playback.mode
+        ? Math.min(1, Math.max(0, (t - item.startTime) / Math.max(0.001, item.duration)))
+        : 1;
+
+      const { dx, dy } = getAnimatedOffset(item, state.playback.mode ? t : state.playback.totalDuration);
+
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (item.type === "stroke" || item.type === "highlighter") {
+        const pts = item.points || [];
+        const count = Math.max(1, Math.ceil(pts.length * progress));
+        ctx.globalAlpha = item.type === "highlighter" ? 0.34 : 1;
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = item.type === "highlighter" ? item.size * 4 : item.size;
+        ctx.beginPath();
+        if (count === 1) {
+          ctx.arc(pts[0].x, pts[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+          ctx.fillStyle = item.color;
+          ctx.fill();
+        } else {
+          traceSmoothPoints(pts, count);
+          ctx.stroke();
+        }
+        if (activeFocus && count > 0) {
+          activeFocus.x = pts[count - 1].x + dx;
+          activeFocus.y = pts[count - 1].y + dy;
+        }
+      } else if (item.type === "rect") {
+        ctx.globalAlpha = progress;
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = item.size;
+        ctx.beginPath();
+        ctx.roundRect(item.x, item.y, item.w * progress, item.h * progress, 14);
+        ctx.stroke();
+        if (activeFocus) { activeFocus.x = item.x + item.w / 2 + dx; activeFocus.y = item.y + item.h / 2 + dy; }
+      } else if (item.type === "circle") {
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = item.size;
+        ctx.beginPath();
+        ctx.ellipse(
+          item.x + item.w / 2, item.y + item.h / 2,
+          Math.abs(item.w / 2), Math.abs(item.h / 2),
+          0, 0, Math.PI * 2 * progress
+        );
+        ctx.stroke();
+        if (activeFocus) { activeFocus.x = item.x + item.w / 2 + dx; activeFocus.y = item.y + item.h / 2 + dy; }
+      } else if (item.type === "arrow") {
+        const x2 = item.x + item.w * progress;
+        const y2 = item.y + item.h * progress;
+        ctx.strokeStyle = item.color;
+        ctx.fillStyle = item.color;
+        ctx.lineWidth = item.size;
+        ctx.beginPath();
+        ctx.moveTo(item.x, item.y);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        if (progress > 0.2) {
+          const ang = Math.atan2(item.h, item.w);
+          const head = 12 + item.size;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - head * Math.cos(ang - 0.45), y2 - head * Math.sin(ang - 0.45));
+          ctx.lineTo(x2 - head * Math.cos(ang + 0.45), y2 - head * Math.sin(ang + 0.45));
+          ctx.closePath();
+          ctx.fill();
+        }
+        if (activeFocus) { activeFocus.x = x2 + dx; activeFocus.y = y2 + dy; }
+      } else if (item.type === "text") {
+        const chars = Math.max(1, Math.ceil((item.text || "").length * progress));
+        ctx.fillStyle = item.color;
+        ctx.font = `700 ${item.size || 24}px system-ui, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText((item.text || "").slice(0, chars), item.x, item.y);
+        if (activeFocus) { activeFocus.x = item.x - 60 + dx; activeFocus.y = item.y + dy; }
+      } else if (item.type === "image") {
+        let img = imageCache.get(item.src);
+        if (!img) {
+          img = new Image();
+          img.onload = scheduleRender;
+          img.src = item.src;
+          imageCache.set(item.src, img);
+        }
+        if (img.complete && img.naturalWidth > 0) {
+          ctx.globalAlpha = progress;
+          const scale = 0.92 + 0.08 * progress;
+          const cx = item.x + item.w / 2;
+          const cy = item.y + item.h / 2;
+          ctx.translate(cx, cy);
+          ctx.scale(scale, scale);
+          ctx.translate(-cx, -cy);
+          drawRoundedImage(img, item.x, item.y, item.w, item.h, item.borderRadius ?? 24);
+        }
+        if (activeFocus) { activeFocus.x = item.x + item.w / 2 + dx; activeFocus.y = item.y + item.h / 2 + dy; }
+      }
+
+      // Selection bounding box & resize handle in Edit Mode only
+      if (!state.playback.mode && item.id === state.selectedId) {
+        const b = getItemBounds(item);
+        ctx.strokeStyle = "#4f46e5";
+        ctx.lineWidth = 1.75 / state.cam.zoom;
+        ctx.setLineDash([6 / state.cam.zoom, 4 / state.cam.zoom]);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.setLineDash([]);
+        if (item.type === "image" || item.type === "rect" || item.type === "circle") {
+          const hs = 10 / state.cam.zoom;
+          ctx.fillStyle = "#4f46e5";
+          ctx.beginPath();
+          ctx.arc(b.x + b.w, b.y + b.h, hs * 0.65, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawLaser() {
+      const now = performance.now();
+      state.laserTrail = state.laserTrail.filter(p => now - p.t < 750);
+      if (!state.laserTrail.length) return;
+      for (let i = 1; i < state.laserTrail.length; i++) {
+        const p0 = state.laserTrail[i - 1], p1 = state.laserTrail[i];
+        const alpha = Math.max(0, 1 - (now - p1.t) / 750);
+        ctx.save();
+        ctx.strokeStyle = `rgba(239, 68, 68, ${alpha})`;
+        ctx.shadowColor = "#ef4444";
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = (5 * alpha) / state.cam.zoom;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      scheduleRender();
+    }
+
+    function render() {
+      drawBackground();
+      ctx.save();
+      ctx.translate(window.innerWidth / 2, window.innerHeight / 2);
+      ctx.scale(state.cam.zoom, state.cam.zoom);
+      ctx.translate(-state.cam.x, -state.cam.y);
+
+      const t = state.playback.time;
+      const focus = { x: null, y: null };
+
+      for (const item of state.items) {
+        if (item.type === "highlighter") drawItem(item, t, focus);
+      }
+      for (const item of state.items) {
+        if (item.type !== "highlighter") drawItem(item, t, focus);
+      }
+
+      drawLaser();
+
+      if (state.playback.mode && state.playback.playing && state.camFollow && focus.x !== null) {
+        state.cam.x += (focus.x - state.cam.x) * 0.08;
+        state.cam.y += (focus.y - state.cam.y) * 0.08;
+      }
+
+      ctx.restore();
+    }
+
+    // Multi-touch Pinch-to-Zoom + Two-Finger Pan + Stylus/Single-Finger Drawing
+    const activePointers = new Map();
+    let pinchStartDist = 0;
+    let pinchStartZoom = 1;
+    let pinchWorldCenter = null;
+
+    let primaryPointerId = null;
+    let draftItem = null;
+    let dragStartWorld = null;
+    let panStartCam = null;
+    let panStartScreen = null;
+    let resizingItem = null;
+    let dragOffsetAcc = { dx: 0, dy: 0 };
+
+    function getPointerDistance(p1, p2) {
+      return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Two-finger pinch zoom & pan takes priority immediately
+      if (activePointers.size === 2) {
+        // Cancel any accidental single-finger stroke started milliseconds before second finger landed
+        if (draftItem) {
+          state.items.pop();
+          if (state.undoStack.length) state.undoStack.pop();
+          draftItem = null;
+        }
+        primaryPointerId = null;
+        const pts = Array.from(activePointers.values());
+        pinchStartDist = Math.max(10, getPointerDistance(pts[0], pts[1]));
+        pinchStartZoom = state.cam.zoom;
+        const midScreen = { x: (pts[0].x + pts[1].x) * 0.5, y: (pts[0].y + pts[1].y) * 0.5 };
+        pinchWorldCenter = screenToWorld(midScreen.x, midScreen.y);
+        return;
+      }
+
+      if (activePointers.size > 2) return;
+
+      primaryPointerId = e.pointerId;
+      const wPos = screenToWorld(e.clientX, e.clientY);
+
+      if (state.playback.mode && state.tool !== "pan" && state.tool !== "laser") {
+        state.playback.mode = false;
+        state.playback.playing = false;
+        state.playback.time = state.playback.totalDuration;
+        syncTimelineUI();
+      }
+
+      if (state.tool === "laser") {
+        state.laserTrail.push({ x: wPos.x, y: wPos.y, t: performance.now() });
+        scheduleRender();
+        return;
+      }
+
+      if (state.tool === "pan" || e.button === 1) {
+        panStartCam = { ...state.cam };
+        panStartScreen = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      if (state.tool === "select") {
+        const finalT = state.playback.totalDuration;
+        // Check resize handle first if an item is already selected
+        if (state.selectedId) {
+          const sel = state.items.find(x => x.id === state.selectedId);
+          if (sel && (sel.type === "image" || sel.type === "rect" || sel.type === "circle")) {
+            const off = getAnimatedOffset(sel, finalT);
+            const b = getItemBounds(sel);
+            const hx = b.x + b.w + off.dx, hy = b.y + b.h + off.dy;
+            if (Math.hypot(wPos.x - hx, wPos.y - hy) <= 22 / state.cam.zoom) {
+              pushUndo();
+              resizingItem = sel;
+              dragStartWorld = wPos;
+              return;
+            }
+          }
+        }
+
+        let hit = null;
+        for (let i = state.items.length - 1; i >= 0; i--) {
+          const it = state.items[i];
+          const off = getAnimatedOffset(it, finalT);
+          const b = getItemBounds(it);
+          if (wPos.x >= b.x + off.dx && wPos.x <= b.x + b.w + off.dx &&
+              wPos.y >= b.y + off.dy && wPos.y <= b.y + b.h + off.dy) {
+            hit = it;
+            break;
+          }
+        }
+        state.selectedId = hit ? hit.id : null;
+        dragStartWorld = wPos;
+        dragOffsetAcc = { dx: 0, dy: 0 };
+        updateContextBar();
+        scheduleRender();
+        return;
+      }
+
+      if (state.tool === "eraser") {
+        pushUndo();
+        eraseAt(wPos);
+        return;
+      }
+
+      if (state.tool === "text") {
+        const txt = prompt("أدخل النص التعليمي:");
+        if (txt && txt.trim()) {
+          pushUndo();
+          state.items.push({
+            id: "it_" + Date.now(),
+            type: "text",
+            text: txt.trim(),
+            x: wPos.x,
+            y: wPos.y,
+            color: state.color,
+            size: Math.max(22, state.size * 5.5)
+          });
+          rebuildTimeline();
+          queueSave();
+          scheduleRender();
+        }
+        return;
+      }
+
+      pushUndo();
+      if (state.tool === "pen" || state.tool === "highlighter") {
+        draftItem = {
+          id: "it_" + Date.now(),
+          type: state.tool === "highlighter" ? "highlighter" : "stroke",
+          color: state.color,
+          size: state.size,
+          points: [wPos]
+        };
+      } else if (state.tool === "rect" || state.tool === "circle" || state.tool === "arrow") {
+        draftItem = {
+          id: "it_" + Date.now(),
+          type: state.tool,
+          color: state.color,
+          size: state.size,
+          x: wPos.x,
+          y: wPos.y,
+          w: 1,
+          h: 1
+        };
+      }
+      if (draftItem) {
+        state.items.push(draftItem);
+        scheduleRender();
+      }
+    });
+
+    function eraseAt(wPos) {
+      const r = 18 / state.cam.zoom;
+      const before = state.items.length;
+      state.items = state.items.filter((it) => {
+        const off = getAnimatedOffset(it, state.playback.totalDuration);
+        const b = getItemBounds(it);
+        return !(wPos.x >= b.x + off.dx - r && wPos.x <= b.x + b.w + off.dx + r &&
+                 wPos.y >= b.y + off.dy - r && wPos.y <= b.y + b.h + off.dy + r);
+      });
+      if (state.items.length !== before) {
+        if (state.selectedId && !state.items.some(x => x.id === state.selectedId)) {
+          state.selectedId = null;
+          updateContextBar();
+        }
+        rebuildTimeline();
+        queueSave();
+        scheduleRender();
+      }
+    }
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (activePointers.has(e.pointerId)) {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      // Two-finger Pinch-to-Zoom & Pan
+      if (activePointers.size === 2 && pinchWorldCenter) {
+        const pts = Array.from(activePointers.values());
+        const dist = Math.max(10, getPointerDistance(pts[0], pts[1]));
+        const nextZoom = Math.max(0.15, Math.min(6, pinchStartZoom * (dist / pinchStartDist)));
+        const midScreen = { x: (pts[0].x + pts[1].x) * 0.5, y: (pts[0].y + pts[1].y) * 0.5 };
+
+        state.cam.zoom = nextZoom;
+        state.cam.x = pinchWorldCenter.x - (midScreen.x - window.innerWidth / 2) / nextZoom;
+        state.cam.y = pinchWorldCenter.y - (midScreen.y - window.innerHeight / 2) / nextZoom;
+        document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+        scheduleRender();
+        return;
+      }
+
+      if (primaryPointerId !== e.pointerId) return;
+      const wPos = screenToWorld(e.clientX, e.clientY);
+
+      if (state.tool === "laser") {
+        state.laserTrail.push({ x: wPos.x, y: wPos.y, t: performance.now() });
+        scheduleRender();
+        return;
+      }
+
+      if (panStartCam) {
+        state.cam.x = panStartCam.x - (e.clientX - panStartScreen.x) / state.cam.zoom;
+        state.cam.y = panStartCam.y - (e.clientY - panStartScreen.y) / state.cam.zoom;
+        scheduleRender();
+        return;
+      }
+
+      if (state.tool === "eraser") {
+        eraseAt(wPos);
+        return;
+      }
+
+      if (resizingItem && dragStartWorld) {
+        const dx = wPos.x - dragStartWorld.x;
+        const dy = wPos.y - dragStartWorld.y;
+        dragStartWorld = wPos;
+        resizingItem.w = Math.max(30, (resizingItem.w || 100) + dx);
+        resizingItem.h = Math.max(30, (resizingItem.h || 100) + dy);
+        scheduleRender();
+        return;
+      }
+
+      if (state.tool === "select" && state.selectedId && dragStartWorld) {
+        const it = state.items.find(x => x.id === state.selectedId);
+        if (it) {
+          const dx = wPos.x - dragStartWorld.x;
+          const dy = wPos.y - dragStartWorld.y;
+          dragStartWorld = wPos;
+          dragOffsetAcc.dx += dx;
+          dragOffsetAcc.dy += dy;
+          if (!it._liveMotion) {
+            pushUndo();
+            it.motions = it.motions || [];
+            it._liveMotion = { dx: 0, dy: 0 };
+            it.motions.push(it._liveMotion);
+          }
+          it._liveMotion.dx = dragOffsetAcc.dx;
+          it._liveMotion.dy = dragOffsetAcc.dy;
+          rebuildTimeline();
+          scheduleRender();
+        }
+        return;
+      }
+
+      if (!draftItem) return;
+      if (draftItem.points) {
+        const last = draftItem.points[draftItem.points.length - 1];
+        if (Math.hypot(wPos.x - last.x, wPos.y - last.y) >= 1.2 / state.cam.zoom) {
+          draftItem.points.push(wPos);
+        }
+      } else {
+        draftItem.w = wPos.x - draftItem.x;
+        draftItem.h = wPos.y - draftItem.y;
+      }
+      scheduleRender();
+    });
+
+    function endPointer(e) {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) {
+        pinchWorldCenter = null;
+      }
+      if (primaryPointerId !== e.pointerId) return;
+      primaryPointerId = null;
+      panStartCam = null;
+      dragStartWorld = null;
+      if (resizingItem) {
+        resizingItem = null;
+        queueSave();
+      }
+      if (state.selectedId) {
+        const it = state.items.find(x => x.id === state.selectedId);
+        if (it && it._liveMotion) {
+          delete it._liveMotion;
+          rebuildTimeline();
+          queueSave();
+        }
+      }
+      if (draftItem) {
+        draftItem = null;
+        rebuildTimeline();
+        queueSave();
+        scheduleRender();
+      }
+    }
+    canvas.addEventListener("pointerup", endPointer);
+    canvas.addEventListener("pointercancel", endPointer);
+    window.addEventListener("blur", () => {
+      activePointers.clear();
+      primaryPointerId = null;
+      draftItem = null;
+      panStartCam = null;
+    });
+
+    // Desktop Wheel Zoom
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const before = screenToWorld(e.clientX, e.clientY);
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      state.cam.zoom = Math.max(0.15, Math.min(6, state.cam.zoom * factor));
+      const after = screenToWorld(e.clientX, e.clientY);
+      state.cam.x += before.x - after.x;
+      state.cam.y += before.y - after.y;
+      document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+      scheduleRender();
+    }, { passive: false });
+
+    // Animation Playback Loop
+    function tick(ts) {
+      if (state.playback.playing) {
+        if (!state.playback.lastTs) state.playback.lastTs = ts;
+        const dt = ((ts - state.playback.lastTs) / 1000) * state.playback.speed;
+        state.playback.lastTs = ts;
+        state.playback.time += dt;
+
+        if (state.playback.stepTargetEnd !== null && state.playback.time >= state.playback.stepTargetEnd) {
+          state.playback.time = state.playback.stepTargetEnd;
+          state.playback.playing = false;
+          state.playback.stepTargetEnd = null;
+        } else if (state.playback.time >= state.playback.totalDuration) {
+          state.playback.time = state.playback.totalDuration;
+          state.playback.playing = false;
+        }
+        syncTimelineUI();
+        scheduleRender();
+      } else {
+        state.playback.lastTs = 0;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // UI Bindings
+    document.querySelectorAll("#toolDock button[data-tool]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#toolDock button[data-tool]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.tool = btn.dataset.tool;
+        if (state.tool !== "select") {
+          state.selectedId = null;
+          updateContextBar();
+          scheduleRender();
+        }
+      });
+    });
+
+    document.querySelectorAll(".swatch").forEach(dot => {
+      dot.addEventListener("click", () => {
+        document.querySelectorAll(".swatch").forEach(d => d.classList.remove("active"));
+        dot.classList.add("active");
+        state.color = dot.dataset.color;
+      });
+    });
+
+    document.getElementById("btnSizeCycle").addEventListener("click", () => {
+      sizeIndex = (sizeIndex + 1) % sizeSteps.length;
+      state.size = sizeSteps[sizeIndex];
+      const px = 4 + sizeIndex * 3.5;
+      const prev = document.getElementById("sizePreview");
+      prev.style.width = px + "px";
+      prev.style.height = px + "px";
+    });
+
+    // Background Popover
+    const bgPop = document.getElementById("bgPopover");
+    document.getElementById("btnBgPopover").addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPop.classList.toggle("open");
+    });
+    document.addEventListener("click", (e) => {
+      if (!bgPop.contains(e.target) && e.target.id !== "btnBgPopover") bgPop.classList.remove("open");
+    });
+
+    document.querySelectorAll(".pattern-opt").forEach(opt => {
+      opt.addEventListener("click", () => {
+        document.querySelectorAll(".pattern-opt").forEach(o => o.classList.remove("active"));
+        opt.classList.add("active");
+        state.bgPattern = opt.dataset.pat;
+        queueSave();
+        scheduleRender();
+      });
+    });
+
+    document.querySelectorAll(".theme-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".theme-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        state.bgTheme = chip.dataset.bg;
+        if (state.bgTheme === "#0f172a" && state.color === "#1e293b") state.color = "#f8fafc";
+        queueSave();
+        scheduleRender();
+      });
+    });
+
+    // Context Bar Actions
+    document.getElementById("btnResetMotion").addEventListener("click", () => {
+      const it = state.items.find(x => x.id === state.selectedId);
+      if (it) { pushUndo(); it.motions = []; rebuildTimeline(); queueSave(); scheduleRender(); }
+    });
+    document.getElementById("btnRadiusCycle").addEventListener("click", () => {
+      const it = state.items.find(x => x.id === state.selectedId);
+      if (it && it.type === "image") {
+        const radii = [0, 12, 24, 40];
+        const next = radii[(radii.indexOf(it.borderRadius ?? 24) + 1) % radii.length];
+        it.borderRadius = next;
+        updateContextBar();
+        queueSave();
+        scheduleRender();
+      }
+    });
+    document.getElementById("btnDeleteSelected").addEventListener("click", () => {
+      if (!state.selectedId) return;
+      pushUndo();
+      state.items = state.items.filter(x => x.id !== state.selectedId);
+      state.selectedId = null;
+      updateContextBar();
+      rebuildTimeline();
+      queueSave();
+      scheduleRender();
+    });
+
+    // Zoom & Fit
+    document.getElementById("btnZoomIn").addEventListener("click", () => {
+      state.cam.zoom = Math.min(6, state.cam.zoom * 1.2);
+      document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+      scheduleRender();
+    });
+    document.getElementById("btnZoomOut").addEventListener("click", () => {
+      state.cam.zoom = Math.max(0.15, state.cam.zoom / 1.2);
+      document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+      scheduleRender();
+    });
+    document.getElementById("btnFit").addEventListener("click", () => {
+      if (!state.items.length) {
+        state.cam = { x: 0, y: 0, zoom: 1 };
+        document.getElementById("zoomLabel").textContent = "100%";
+        scheduleRender();
+        return;
+      }
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const it of state.items) {
+        const b = getItemBounds(it);
+        minX = Math.min(minX, b.x); minY = Math.min(minY, b.y);
+        maxX = Math.max(maxX, b.x + b.w); maxY = Math.max(maxY, b.y + b.h);
+      }
+      state.cam.x = (minX + maxX) / 2;
+      state.cam.y = (minY + maxY) / 2;
+      state.cam.zoom = Math.max(0.25, Math.min(1.5, Math.min((window.innerWidth - 130) / (maxX - minX + 80), (window.innerHeight - 190) / (maxY - minY + 80))));
+      document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+      scheduleRender();
+    });
+
+    document.getElementById("btnCleanMode").addEventListener("click", () => document.body.classList.add("clean-mode"));
+    document.getElementById("btnExitClean").addEventListener("click", () => document.body.classList.remove("clean-mode"));
+
+    document.getElementById("btnUndo").addEventListener("click", () => {
+      if (!state.undoStack.length) return;
+      state.redoStack.push(JSON.stringify(state.items));
+      state.items = JSON.parse(state.undoStack.pop());
+      state.selectedId = null;
+      rebuildTimeline(); queueSave(); scheduleRender();
+    });
+    document.getElementById("btnRedo").addEventListener("click", () => {
+      if (!state.redoStack.length) return;
+      state.undoStack.push(JSON.stringify(state.items));
+      state.items = JSON.parse(state.redoStack.pop());
+      state.selectedId = null;
+      rebuildTimeline(); queueSave(); scheduleRender();
+    });
+
+    // Image Insertion with Rounded Corners
+    document.getElementById("btnInsertImg").addEventListener("click", () => document.getElementById("imgInput").click());
+    document.getElementById("imgInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const w = Math.min(340, img.naturalWidth || 260);
+          const h = w * ((img.naturalHeight || 200) / (img.naturalWidth || 260));
+          pushUndo();
+          const newItem = {
+            id: "it_" + Date.now(),
+            type: "image",
+            src: reader.result,
+            x: state.cam.x - w / 2,
+            y: state.cam.y - h / 2,
+            w, h,
+            borderRadius: 24
+          };
+          state.items.push(newItem);
+          state.selectedId = newItem.id;
+          rebuildTimeline();
+          queueSave();
+          scheduleRender();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    });
+
+    // Playback Controls
+    document.getElementById("btnPlay").addEventListener("click", () => {
+      state.playback.mode = true;
+      state.playback.stepTargetEnd = null;
+      if (state.playback.time >= state.playback.totalDuration) state.playback.time = 0;
+      state.playback.playing = !state.playback.playing;
+      syncTimelineUI();
+      scheduleRender();
+    });
+
+    document.getElementById("btnRestart").addEventListener("click", () => {
+      state.playback.mode = true;
+      state.playback.time = 0;
+      state.playback.playing = true;
+      syncTimelineUI();
+      scheduleRender();
+    });
+
+    document.getElementById("btnStep").addEventListener("click", () => {
+      state.playback.mode = true;
+      if (state.playback.time >= state.playback.totalDuration) state.playback.time = 0;
+      const next = state.items.find(it => it.endTime > state.playback.time + 0.02);
+      if (next) {
+        state.playback.stepTargetEnd = next.endTime;
+        state.playback.playing = true;
+      }
+      syncTimelineUI();
+    });
+
+    document.getElementById("btnEditMode").addEventListener("click", () => {
+      state.playback.mode = false;
+      state.playback.playing = false;
+      state.playback.time = state.playback.totalDuration;
+      syncTimelineUI();
+      scheduleRender();
+    });
+
+    document.getElementById("scrubber").addEventListener("input", (e) => {
+      state.playback.mode = true;
+      state.playback.playing = false;
+      state.playback.time = (Number(e.target.value) / 1000) * state.playback.totalDuration;
+      syncTimelineUI();
+      scheduleRender();
+    });
+
+    document.getElementById("speedSelect").addEventListener("change", (e) => {
+      state.playback.speed = Number(e.target.value);
+    });
+
+    document.getElementById("btnCamFollow").addEventListener("click", (e) => {
+      state.camFollow = !state.camFollow;
+      e.currentTarget.classList.toggle("active", state.camFollow);
+    });
+
+    // Demo Lesson
+    function loadDemoLesson() {
+      currentProjectId = "proj_" + Date.now();
+      document.getElementById("currentProjName").textContent = "الخاصية الأسموزية";
+      state.items = [
+        { id: "d1", type: "text", text: "الخاصية الأسموزية (Osmosis)", x: 185, y: -150, color: "#4f46e5", size: 30 },
+        { id: "d2", type: "rect", x: -240, y: -90, w: 480, h: 220, color: "#0284c7", size: 4 },
+        { id: "d3", type: "arrow", x: 0, y: -90, w: 0, h: 220, color: "#64748b", size: 3 },
+        { id: "d4", type: "text", text: "تركيز ماء مرتفع", x: -55, y: -20, color: "#059669", size: 22 },
+        { id: "d5", type: "text", text: "تركيز ماء منخفض", x: 215, y: -20, color: "#dc2626", size: 22 },
+        { id: "d6", type: "arrow", x: -60, y: 42, w: 130, h: 0, color: "#0ea5e9", size: 5 }
+      ];
+      state.cam = { x: 0, y: 0, zoom: 1 };
+      state.playback.mode = false;
+      rebuildTimeline();
+      queueSave();
+      scheduleRender();
+    }
+
+    // Projects Modal
+    function renderProjectsList() {
+      const box = document.getElementById("projectsList");
+      const list = Object.values(projects).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      box.innerHTML = list.map(p => `
+        <div class="proj-row">
+          <div>
+            <strong style="font-size:13.5px;">${p.title}</strong>
+            <div style="font-size:11px;color:var(--muted);">${(p.items || []).length} عنصر</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="openProject('${p.id}')" class="pill-btn primary" style="height:30px;">فتح</button>
+            <button onclick="deleteProject('${p.id}')" class="pill-btn" style="height:30px;color:var(--danger);">حذف</button>
+          </div>
+        </div>
+      `).join("") || "<p style='color:var(--muted);font-size:13px;'>لا توجد مشاريع محفوظة بعد.</p>";
+    }
+
+    window.openProject = (id) => {
+      const p = projects[id];
+      if (!p) return;
+      currentProjectId = p.id;
+      document.getElementById("currentProjName").textContent = p.title || "درس تعليمي";
+      state.items = JSON.parse(JSON.stringify(p.items || []));
+      state.bgPattern = p.bgPattern || "dots";
+      state.bgTheme = p.bgTheme || "#f8fafc";
+      state.cam = p.cam || { x: 0, y: 0, zoom: 1 };
+      document.getElementById("zoomLabel").textContent = Math.round(state.cam.zoom * 100) + "%";
+      state.playback.mode = false;
+      rebuildTimeline();
+      scheduleRender();
+      document.getElementById("projectsModal").classList.remove("open");
+    };
+
+    window.deleteProject = (id) => {
+      delete projects[id];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      renderProjectsList();
+    };
+
+    document.getElementById("btnProjects").addEventListener("click", () => {
+      document.getElementById("renameInput").value = document.getElementById("currentProjName").textContent;
+      renderProjectsList();
+      document.getElementById("projectsModal").classList.add("open");
+    });
+    document.getElementById("btnSaveRename").addEventListener("click", () => {
+      const v = document.getElementById("renameInput").value.trim();
+      if (v && currentProjectId && projects[currentProjectId]) {
+        projects[currentProjectId].title = v;
+        document.getElementById("currentProjName").textContent = v;
+        queueSave();
+        renderProjectsList();
+      }
+    });
+    document.getElementById("btnCloseProjects").addEventListener("click", () => document.getElementById("projectsModal").classList.remove("open"));
+    document.getElementById("btnNewBlank").addEventListener("click", () => {
+      currentProjectId = "proj_" + Date.now();
+      document.getElementById("currentProjName").textContent = "سبورة جديدة " + (Object.keys(projects).length + 1);
+      state.items = [];
+      state.cam = { x: 0, y: 0, zoom: 1 };
+      document.getElementById("zoomLabel").textContent = "100%";
+      state.playback.mode = false;
+      rebuildTimeline();
+      queueSave();
+      scheduleRender();
+      document.getElementById("projectsModal").classList.remove("open");
+    });
+    document.getElementById("btnNewDemo").addEventListener("click", () => {
+      loadDemoLesson();
+      document.getElementById("projectsModal").classList.remove("open");
+    });
+
+    document.getElementById("btnExportJson").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify({ bgPattern: state.bgPattern, bgTheme: state.bgTheme, items: state.items }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "osmosis-lesson.json";
+      a.click();
+    });
+    document.getElementById("btnImportJson").addEventListener("click", () => document.getElementById("jsonInput").click());
+    document.getElementById("jsonInput").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const data = JSON.parse(r.result);
+          currentProjectId = "proj_" + Date.now();
+          document.getElementById("currentProjName").textContent = f.name.replace(".json", "");
+          state.items = data.items || [];
+          state.bgPattern = data.bgPattern || "dots";
+          state.bgTheme = data.bgTheme || "#f8fafc";
+          rebuildTimeline(); queueSave(); scheduleRender();
+          document.getElementById("projectsModal").classList.remove("open");
+        } catch (_) { alert("ملف غير صالح"); }
+      };
+      r.readAsText(f);
+    });
+
+    // Boot
+    resize();
+    try {
+      projects = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      const lastId = localStorage.getItem(ACTIVE_KEY);
+      if (lastId && projects[lastId]) {
+        openProject(lastId);
+      } else {
+        loadDemoLesson();
+      }
+    } catch (_) {
+      loadDemoLesson();
+    }
+  </script>
+</body>
+</html>
